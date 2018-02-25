@@ -92,6 +92,7 @@ class DownloadTask extends AsyncTask<String, Integer, DownloadTask.Result> {
     @Override
     protected void onPostExecute(Result result) {
         if (result != null && listener != null) {
+
             if (result.mException != null) {
                 listener.onDataFailed(result.mException.getMessage());
             } else if (result.mResultValue != null) {

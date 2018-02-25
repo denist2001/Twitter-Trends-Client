@@ -1,6 +1,5 @@
 package twitter.challenge.code;
 
-import android.app.Activity;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -11,11 +10,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class TrendsRecyclerAdapter extends RecyclerView.Adapter<TrendsRecyclerAdapter.TrendsViewHolder> {
     @NonNull
-    private List<Trend> trends;
+    private ArrayList<Trend> trends;
     @NonNull
     private final ItemClickListener clickListener;
 
@@ -59,7 +57,7 @@ public class TrendsRecyclerAdapter extends RecyclerView.Adapter<TrendsRecyclerAd
         if (!this.trends.isEmpty()) {
             this.trends.clear();
         }
-        this.trends.addAll(trends);
+        this.trends = trends;
         notifyDataSetChanged();
     }
 

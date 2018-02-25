@@ -1,26 +1,23 @@
 package twitter.challenge.code;
 
+import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.constraint.ConstraintLayout;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
-
-import twitter.challenge.code.Tools.SerializerListener;
-import twitter.challenge.code.Tools.Utils;
 
 public class MainActivity extends FragmentActivity implements TrendsRecyclerAdapter.ItemClickListener {
 
@@ -30,6 +27,17 @@ public class MainActivity extends FragmentActivity implements TrendsRecyclerAdap
     private ConnectivityManager connectivityManager;
     private RecyclerView trendsList;
     private TrendsRecyclerAdapter recyclerAdapter;
+    private final Observer<ArrayList<Trend>> trendsObserver = new Observer<ArrayList<Trend>>() {
+        @Override
+        public void onChanged(@Nullable final ArrayList<Trend> newValue) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    recyclerAdapter.updateTrendsList(newValue);
+                }
+            });
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,37 +46,11 @@ public class MainActivity extends FragmentActivity implements TrendsRecyclerAdap
         getLifecycle().addObserver(new TwitterTrendsLifeCycleObserver());
         connectivityManager =
                 (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        TrendsViewModelFactory factory = new TrendsViewModelFactory(new TwitterDataLoaderListener() {
-            @Override
-            public void onDataLoaded(String jsonResult) {
-                Utils.getTrendsArrayFromJson(jsonResult, new SerializerListener() {
-                    @Override
-                    public void serialisationComplete(ArrayList<Trend> trends) {
-                        viewModel.refreshTrendsList(trends);
-                        showTrendsInRecyclerView(trends);
-                    }
 
-                    @Override
-                    public void serialisationError(String errorMessage) {
-                        Log.e(DownloadTask.TAG, errorMessage);
-                    }
-                });
-            }
-
-            @Override
-            public void onDataFailed(String message) {
-
-            }
-        });
-        viewModel = ViewModelProviders.of(this, factory).get(TrendsViewModel.class);
+        viewModel = ViewModelProviders.of(this).get(TrendsViewModel.class);
         //search area region
-        final SearchView searchView = findViewById(R.id.search_view);
-        searchView.setOnSearchClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-            }
-        });
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        ((SearchView)findViewById(R.id.search_view))
+                .setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 startDownload(query);
@@ -88,31 +70,26 @@ public class MainActivity extends FragmentActivity implements TrendsRecyclerAdap
         trendsList.addItemDecoration(dividerItemDecoration);
         trendsList.setLayoutManager(
                 new LinearLayoutManager(trendsList.getContext()));
-        recyclerAdapter = new TrendsRecyclerAdapter(viewModel.getTrends(INIT_VALUE, connectivityManager), this);
+        MutableLiveData<ArrayList<Trend>> liveData = viewModel.getTrends(INIT_VALUE, connectivityManager);
+        subscribeTrendsList(liveData);
+        recyclerAdapter = new TrendsRecyclerAdapter(liveData.getValue(), this);
         trendsList.setAdapter(recyclerAdapter);
 
         findViewById(R.id.requestLocation).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //TODO request data from twitter
-                //viewModel.getWOEId(twitterDataLoaderListener);
-                //if ((woeId != null) && !woeId.isEmpty()) {
-                //}
+                AlertDialog.Builder alertDialog =
+                        new AlertDialog.Builder(MainActivity.this);
+                alertDialog.setMessage("This function doesn't finished. Twitter registration needs.");
+                alertDialog.create().show();
             }
         });
         //search area end
     }
 
-    private void showTrendsInRecyclerView(final ArrayList<Trend> trends) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                recyclerAdapter.updateTrendsList(trends);
-//                recyclerAdapter.notifyDataSetChanged();
-//                recyclerAdapter.setTrends(trends);
-//                recyclerAdapter.notifyDataSetChanged();
-            }
-        });
+    private void subscribeTrendsList(MutableLiveData<ArrayList<Trend>> liveData) {
+        liveData.observe(this, trendsObserver);
     }
 
     private void startDownload(String queryBody) {

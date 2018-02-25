@@ -1,25 +1,55 @@
 package twitter.challenge.code;
 
+import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 import android.net.ConnectivityManager;
-import android.support.annotation.NonNull;
+import android.os.Handler;
+import android.os.Looper;
 
 import java.util.ArrayList;
+
+import twitter.challenge.code.Tools.SerializerListener;
+import twitter.challenge.code.Tools.Utils;
 
 class TrendsViewModel extends ViewModel {
 
     private DownloadTask mDownloadTask;
-    private ArrayList<Trend> trends = new ArrayList<>();
+    private MutableLiveData<ArrayList<Trend>> trends = new MutableLiveData<>();
     private TwitterDataLoaderListener listener;
 
-    TrendsViewModel(@NonNull final TwitterDataLoaderListener listener) {
-        this.listener = listener;
+    TrendsViewModel() {
+        trends.setValue(new ArrayList<Trend>());
+        this.listener = new TwitterDataLoaderListener() {
+            @Override
+            public void onDataLoaded(String jsonResult) {
+                Utils.getTrendsArrayFromJson(jsonResult, new SerializerListener() {
+                    @Override
+                    public void serialisationComplete(final ArrayList<Trend> newTrends) {
+                        Runnable runnable = new Runnable(){
+                            @Override
+                            public void run() {
+                                trends.setValue(newTrends);
+                            }
+                        };
+                        new Handler(Looper.getMainLooper()).post(runnable);
+                    }
+
+                    @Override
+                    public void serialisationError(String errorMessage) {
+
+                    }
+                });
+            }
+
+            @Override
+            public void onDataFailed(String message) {
+
+            }
+        };
     }
 
-    ArrayList<Trend> getTrends(String queryBody, ConnectivityManager manager) {
-        if (trends.isEmpty()) {
-            startDownload(queryBody, manager);
-        }
+    MutableLiveData<ArrayList<Trend>> getTrends(String queryBody, ConnectivityManager manager) {
+        startDownload(queryBody, manager);
         return trends;
     }
 
@@ -42,9 +72,5 @@ class TrendsViewModel extends ViewModel {
         if (mDownloadTask != null) {
             mDownloadTask.cancel(true);
         }
-    }
-
-    void refreshTrendsList(ArrayList<Trend> trends) {
-        this.trends = trends;
     }
 }
