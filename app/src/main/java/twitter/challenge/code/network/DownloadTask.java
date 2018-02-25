@@ -3,17 +3,22 @@ package twitter.challenge.code.network;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.io.IOException;
 
-import twitter.challenge.code.TwitterDataLoaderListener;
+import twitter.challenge.code.listeners.TwitterDataLoaderListener;
 
 public class DownloadTask extends AsyncTask<String, Integer, DownloadTask.Result> {
 
+    @NonNull
     private final TwitterDataLoaderListener listener;
+    @NonNull
     private final ConnectivityManager manager;
 
-    public DownloadTask(TwitterDataLoaderListener listener, ConnectivityManager manager) {
+    public DownloadTask(@NonNull final TwitterDataLoaderListener listener,
+                        @NonNull final ConnectivityManager manager) {
         this.listener = listener;
         this.manager = manager;
     }
@@ -24,14 +29,16 @@ public class DownloadTask extends AsyncTask<String, Integer, DownloadTask.Result
      * This allows you to pass exceptions to the UI thread that were thrown during doInBackground().
      */
     static class Result {
+        @Nullable
         String mResultValue;
+        @Nullable
         Exception mException;
 
-        Result(String resultValue) {
+        Result(@NonNull final String resultValue) {
             mResultValue = resultValue;
         }
 
-        Result(Exception exception) {
+        Result(@NonNull final Exception exception) {
             mException = exception;
         }
     }
@@ -41,15 +48,13 @@ public class DownloadTask extends AsyncTask<String, Integer, DownloadTask.Result
      */
     @Override
     protected void onPreExecute() {
-        if (listener != null) {
-            NetworkInfo networkInfo = manager.getActiveNetworkInfo();
-            if (networkInfo == null || !networkInfo.isConnected() ||
-                    (networkInfo.getType() != ConnectivityManager.TYPE_WIFI
-                            && networkInfo.getType() != ConnectivityManager.TYPE_MOBILE)) {
-                // If no connectivity, cancel task and update Callback with null data.
-                listener.onDataFailed("Wifi or mobile connection should be available.");
-                cancel(true);
-            }
+        final NetworkInfo networkInfo = manager.getActiveNetworkInfo();
+        // If no connectivity, cancel task and update Callback with null data.
+        if (networkInfo == null || !networkInfo.isConnected()
+                || (networkInfo.getType() != ConnectivityManager.TYPE_WIFI
+                && networkInfo.getType() != ConnectivityManager.TYPE_MOBILE)) {
+            listener.onDataFailed("Wifi or mobile connection should be available.");
+            cancel(true);
         }
     }
 
@@ -57,13 +62,12 @@ public class DownloadTask extends AsyncTask<String, Integer, DownloadTask.Result
      * Defines work to perform on the background thread.
      */
     @Override
-    protected DownloadTask.Result doInBackground(String... params) {
+    protected DownloadTask.Result doInBackground(final String... params) {
         Result result = null;
         if (!isCancelled() && params != null && params.length > 0) {
-            String param = params[0];
             try {
-                String resultString = downloadUrl(param);
-                if (resultString != null) {
+                final String resultString = downloadUrl(params[0]);
+                if (!resultString.isEmpty()) {
                     result = new Result(resultString);
                 } else {
                     throw new IOException("No response received.");
@@ -79,27 +83,30 @@ public class DownloadTask extends AsyncTask<String, Integer, DownloadTask.Result
      * Updates the DownloadCallback with the result.
      */
     @Override
-    protected void onPostExecute(Result result) {
-        if (result != null && listener != null) {
-
+    protected void onPostExecute(final Result result) {
+        if (result != null) {
+            if (result.mResultValue != null) {
+                listener.onDataLoaded(result.mResultValue);
+                return;
+            }
             if (result.mException != null) {
                 listener.onDataFailed(result.mException.getMessage());
-            } else if (result.mResultValue != null) {
-                listener.onDataLoaded(result.mResultValue);
+                return;
             }
         }
+        listener.onDataFailed("Unknown result.");
     }
 
     /**
      * Override to add special behavior for cancelled AsyncTask.
      */
     @Override
-    protected void onCancelled(Result result) {
-        this.cancel(true);
+    protected void onCancelled(@NonNull final Result result) {
+        cancel(true);
     }
 
-    //https://api.gemini.yahoo.com/v3/rest/dictionary/woeid?location=california&type=state
-    private String downloadUrl(String param) throws IOException {
+    @NonNull
+    private String downloadUrl(@NonNull final String param) throws IOException {
         return TwitterConnection.getTrendsInWOEID(param);
     }
 }

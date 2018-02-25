@@ -17,8 +17,8 @@ public class TrendsRecyclerAdapter extends RecyclerView.Adapter<TrendsRecyclerAd
     @NonNull
     private final ItemClickListener clickListener;
 
-    TrendsRecyclerAdapter(@NonNull final ArrayList<Trend> trends,
-                          @NonNull final ItemClickListener clickListener) {
+    public TrendsRecyclerAdapter(@NonNull final ArrayList<Trend> trends,
+                                 @NonNull final ItemClickListener clickListener) {
         this.trends = trends;
         this.clickListener = clickListener;
     }
@@ -27,7 +27,7 @@ public class TrendsRecyclerAdapter extends RecyclerView.Adapter<TrendsRecyclerAd
     public TrendsViewHolder onCreateViewHolder(@NonNull final ViewGroup parent, final int viewType) {
         final View suggestionInListBinding = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.trend_view, parent, false);
-        DisplayMetrics displaymetrics = new DisplayMetrics();
+        final DisplayMetrics displaymetrics = new DisplayMetrics();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             parent.getDisplay().getMetrics(displaymetrics);
         }
@@ -53,7 +53,10 @@ public class TrendsRecyclerAdapter extends RecyclerView.Adapter<TrendsRecyclerAd
         return trends.size();
     }
 
-    void updateTrendsList(ArrayList<Trend> trends) {
+    public void updateTrendsList(@NonNull final ArrayList<Trend> trends) {
+        if (trends.isEmpty()) {
+            return;
+        }
         if (!this.trends.isEmpty()) {
             this.trends.clear();
         }

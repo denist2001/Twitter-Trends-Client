@@ -1,28 +1,32 @@
-package twitter.challenge.code;
+package twitter.challenge.code.viewmodel;
 
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.ViewModel;
 import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
 
-import twitter.challenge.code.Tools.SerializerListener;
-import twitter.challenge.code.Tools.Utils;
+import twitter.challenge.code.Trend;
+import twitter.challenge.code.listeners.TwitterDataLoaderListener;
+import twitter.challenge.code.listeners.SerializerListener;
+import twitter.challenge.code.tools.Utils;
 import twitter.challenge.code.network.DownloadTask;
 
-class TrendsViewModel extends ViewModel {
+public class TrendsViewModel extends ViewModel {
 
     private DownloadTask mDownloadTask;
-    private MutableLiveData<ArrayList<Trend>> trends = new MutableLiveData<>();
+    @NonNull
+    private final MutableLiveData<ArrayList<Trend>> trends = new MutableLiveData<>();
     private TwitterDataLoaderListener listener;
 
-    TrendsViewModel() {
+    public TrendsViewModel() {
         trends.setValue(new ArrayList<Trend>());
         this.listener = new TwitterDataLoaderListener() {
             @Override
-            public void onDataLoaded(String jsonResult) {
+            public void onDataLoaded(@NonNull final String jsonResult) {
                 Utils.getTrendsArrayFromJson(jsonResult, new SerializerListener() {
                     @Override
                     public void serialisationComplete(final ArrayList<Trend> newTrends) {
@@ -43,13 +47,15 @@ class TrendsViewModel extends ViewModel {
             }
 
             @Override
-            public void onDataFailed(String message) {
+            public void onDataFailed(@NonNull final String message) {
 
             }
         };
     }
 
-    MutableLiveData<ArrayList<Trend>> getTrends(String queryBody, ConnectivityManager manager) {
+    @NonNull
+    public MutableLiveData<ArrayList<Trend>> getTrends(@NonNull final String queryBody,
+                                                       @NonNull final ConnectivityManager manager) {
         startDownload(queryBody, manager);
         return trends;
     }
@@ -59,7 +65,8 @@ class TrendsViewModel extends ViewModel {
      *
      * @param queryBody - expression for twitter query
      */
-    private void startDownload(String queryBody, ConnectivityManager manager) {
+    private void startDownload(@NonNull final String queryBody,
+                               @NonNull final ConnectivityManager manager) {
         cancelDownload();
 
         mDownloadTask = new DownloadTask(listener, manager);

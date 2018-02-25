@@ -1,4 +1,4 @@
-package twitter.challenge.code.Tools;
+package twitter.challenge.code.tools;
 
 import android.support.annotation.NonNull;
 
@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 import twitter.challenge.code.Trend;
+import twitter.challenge.code.listeners.SerializerListener;
 
 public class Utils {
     public static void getTrendsArrayFromJson(@NonNull final String jsonResult,
@@ -17,11 +18,11 @@ public class Utils {
             @Override
             public void run() {
                 try {
-                    ArrayList<Trend> trendsArray = new ArrayList<>();
-                    JSONArray trendsMainObject = new JSONArray(jsonResult);
-                    JSONArray trends = trendsMainObject.getJSONObject(0).optJSONArray("trends");
+                    final ArrayList<Trend> trendsArray = new ArrayList<>();
+                    final JSONArray trendsMainObject = new JSONArray(jsonResult);
+                    final JSONArray trends = trendsMainObject.getJSONObject(0).getJSONArray("trends");
                     for (int i = 0; i < trends.length(); i++) {
-                        JSONObject trend = trends.getJSONObject(i);
+                        final JSONObject trend = trends.getJSONObject(i);
                         trendsArray.add(new Trend(trend.optString("name", "Empty"),
                                 trend.optString("url", "Empty"),
                                 trend.optBoolean("promoted_content", false),

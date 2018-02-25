@@ -1,4 +1,4 @@
-package twitter.challenge.code;
+package twitter.challenge.code.view;
 
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AlertDialog;
@@ -19,13 +20,17 @@ import android.view.View;
 
 import java.util.ArrayList;
 
+import twitter.challenge.code.R;
+import twitter.challenge.code.Trend;
+import twitter.challenge.code.TrendsRecyclerAdapter;
+import twitter.challenge.code.viewmodel.TrendsViewModel;
+
 public class MainActivity extends FragmentActivity implements TrendsRecyclerAdapter.ItemClickListener {
 
     //TODO can be restore from shared preferences
     public static final String INIT_VALUE = "638242";//Berlin area
     private TrendsViewModel viewModel;
     private ConnectivityManager connectivityManager;
-    private RecyclerView trendsList;
     private TrendsRecyclerAdapter recyclerAdapter;
     private final Observer<ArrayList<Trend>> trendsObserver = new Observer<ArrayList<Trend>>() {
         @Override
@@ -33,7 +38,9 @@ public class MainActivity extends FragmentActivity implements TrendsRecyclerAdap
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    recyclerAdapter.updateTrendsList(newValue);
+                    if (newValue != null) {
+                        recyclerAdapter.updateTrendsList(newValue);
+                    }
                 }
             });
         }
@@ -43,60 +50,64 @@ public class MainActivity extends FragmentActivity implements TrendsRecyclerAdap
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getLifecycle().addObserver(new TwitterTrendsLifeCycleObserver());
         connectivityManager =
                 (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-
         viewModel = ViewModelProviders.of(this).get(TrendsViewModel.class);
         //search area region
         ((SearchView)findViewById(R.id.search_view))
                 .setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public boolean onQueryTextSubmit(String query) {
+            public boolean onQueryTextSubmit(@NonNull final String query) {
                 startDownload(query);
                 return false;
             }
 
             @Override
-            public boolean onQueryTextChange(String newText) {
+            public boolean onQueryTextChange(@NonNull final String newText) {
                 return false;
             }
         });
 
-        trendsList = findViewById(R.id.trendsList);
+        final RecyclerView trendsList = findViewById(R.id.trendsList);
         trendsList.setHasFixedSize(true);
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
+        final DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(
                 trendsList.getContext(), DividerItemDecoration.VERTICAL);
         trendsList.addItemDecoration(dividerItemDecoration);
         trendsList.setLayoutManager(
                 new LinearLayoutManager(trendsList.getContext()));
-        MutableLiveData<ArrayList<Trend>> liveData = viewModel.getTrends(INIT_VALUE, connectivityManager);
-        subscribeTrendsList(liveData);
-        recyclerAdapter = new TrendsRecyclerAdapter(liveData.getValue(), this);
-        trendsList.setAdapter(recyclerAdapter);
+        final MutableLiveData<ArrayList<Trend>> liveData = startDownload(INIT_VALUE);
+        if (liveData != null) {
+            subscribeTrendsList(liveData);
+            recyclerAdapter = new TrendsRecyclerAdapter(liveData.getValue(), this);
+            trendsList.setAdapter(recyclerAdapter);
+        }
 
         findViewById(R.id.requestLocation).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //TODO request data from twitter
-                AlertDialog.Builder alertDialog =
-                        new AlertDialog.Builder(MainActivity.this);
-                alertDialog.setMessage("This function doesn't finished. Twitter registration needs.");
-                alertDialog.create().show();
+                //TODO request current WOEID from Yahoo
+                showAlertDialog("This function doesn't finished. Twitter registration needs.");
             }
         });
         //search area end
     }
 
-    private void subscribeTrendsList(MutableLiveData<ArrayList<Trend>> liveData) {
+    private void showAlertDialog(@NonNull final String message) {
+        final AlertDialog.Builder alertDialog =
+                new AlertDialog.Builder(MainActivity.this);
+        alertDialog.setMessage(message);
+        alertDialog.create().show();
+    }
+
+    private void subscribeTrendsList(@NonNull final MutableLiveData<ArrayList<Trend>> liveData) {
         liveData.observe(this, trendsObserver);
     }
 
-    private void startDownload(String queryBody) {
-        if (viewModel != null) {
-            // Execute the async download.
-            viewModel.getTrends(queryBody, connectivityManager);
+    private MutableLiveData<ArrayList<Trend>> startDownload(@NonNull final String queryBody) {
+        if (viewModel != null && !queryBody.isEmpty()) {
+            return viewModel.getTrends(queryBody, connectivityManager);
         }
+        return null;
     }
 
     //TrendsRecyclerAdapter.ItemClickListener region
