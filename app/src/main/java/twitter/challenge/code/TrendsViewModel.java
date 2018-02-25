@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import twitter.challenge.code.Tools.SerializerListener;
 import twitter.challenge.code.Tools.Utils;
+import twitter.challenge.code.network.DownloadTask;
 
 class TrendsViewModel extends ViewModel {
 
