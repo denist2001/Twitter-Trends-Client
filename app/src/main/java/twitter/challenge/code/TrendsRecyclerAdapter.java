@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+import twitter.challenge.code.databinding.TrendViewBinding;
+
 public class TrendsRecyclerAdapter extends RecyclerView.Adapter<TrendsRecyclerAdapter.TrendsViewHolder> {
     @NonNull
     private ArrayList<Trend> trends;
@@ -25,27 +27,22 @@ public class TrendsRecyclerAdapter extends RecyclerView.Adapter<TrendsRecyclerAd
 
     @Override
     public TrendsViewHolder onCreateViewHolder(@NonNull final ViewGroup parent, final int viewType) {
-        final View suggestionInListBinding = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.trend_view, parent, false);
+        final TrendViewBinding suggestionInListBinding = TrendViewBinding.inflate(
+                LayoutInflater.from(parent.getContext()),
+                parent,
+                false);
         final DisplayMetrics displaymetrics = new DisplayMetrics();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             parent.getDisplay().getMetrics(displaymetrics);
         }
-        suggestionInListBinding.getLayoutParams().width = displaymetrics.widthPixels;
+        suggestionInListBinding.getRoot().getLayoutParams().width = displaymetrics.widthPixels;
         return new TrendsViewHolder(suggestionInListBinding);
     }
 
     @Override
     public void onBindViewHolder(@NonNull final TrendsViewHolder holder, final int position) {
         final Trend object = trends.get(position);
-        holder.nameView.setText(object.getName());
-        holder.urlView.setText(object.getUrl());
-        holder.urlView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clickListener.onItemClicked(((TextView) v).getText().toString());
-            }
-        });
+        holder.bind(object);
     }
 
     @Override
@@ -66,18 +63,22 @@ public class TrendsRecyclerAdapter extends RecyclerView.Adapter<TrendsRecyclerAd
 
     class TrendsViewHolder extends RecyclerView.ViewHolder {
         @NonNull
-        private final View element;
-        @NonNull
-        private final TextView nameView;
-        @NonNull
-        private final TextView urlView;
+        private final TrendViewBinding trendViewBinding;
 
+        TrendsViewHolder(@NonNull final TrendViewBinding bindingElement) {
+            super(bindingElement.getRoot());
+            this.trendViewBinding = bindingElement;
+        }
 
-        TrendsViewHolder(@NonNull final View element) {
-            super(element);
-            this.element = element;
-            nameView = element.findViewById(R.id.name_view);
-            urlView = element.findViewById(R.id.url_view);
+        void bind(Trend item) {
+            trendViewBinding.setVariable(BR.trend, item);
+            trendViewBinding.urlView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    clickListener.onItemClicked(((TextView) v).getText().toString());
+                }
+            });
+            trendViewBinding.executePendingBindings();
         }
     }
 

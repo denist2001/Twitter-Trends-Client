@@ -32,7 +32,7 @@ public class Trend {
     }
 
     @Nullable
-    String getUrl() {
+    public String getUrl() {
         return url;
     }
 

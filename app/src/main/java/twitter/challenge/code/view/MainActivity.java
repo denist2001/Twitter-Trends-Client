@@ -2,7 +2,6 @@ package twitter.challenge.code.view;
 
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -52,21 +51,21 @@ public class MainActivity extends FragmentActivity implements TrendsRecyclerAdap
         setContentView(R.layout.activity_main);
         connectivityManager =
                 (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        viewModel = ViewModelProviders.of(this).get(TrendsViewModel.class);
+        viewModel = TrendsViewModel.getInstance();
         //search area region
-        ((SearchView)findViewById(R.id.search_view))
+        ((SearchView) findViewById(R.id.search_view))
                 .setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(@NonNull final String query) {
-                startDownload(query);
-                return false;
-            }
+                    @Override
+                    public boolean onQueryTextSubmit(@NonNull final String query) {
+                        startDownload(query);
+                        return false;
+                    }
 
-            @Override
-            public boolean onQueryTextChange(@NonNull final String newText) {
-                return false;
-            }
-        });
+                    @Override
+                    public boolean onQueryTextChange(@NonNull final String newText) {
+                        return false;
+                    }
+                });
 
         final RecyclerView trendsList = findViewById(R.id.trendsList);
         trendsList.setHasFixedSize(true);

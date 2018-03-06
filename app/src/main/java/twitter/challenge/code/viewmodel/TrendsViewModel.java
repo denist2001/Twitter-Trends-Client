@@ -17,12 +17,14 @@ import twitter.challenge.code.network.DownloadTask;
 
 public class TrendsViewModel extends ViewModel {
 
+    @NonNull
+    private static final TrendsViewModel INSTANCE = new TrendsViewModel();
     private DownloadTask mDownloadTask;
     @NonNull
     private final MutableLiveData<ArrayList<Trend>> trends = new MutableLiveData<>();
     private TwitterDataLoaderListener listener;
 
-    public TrendsViewModel() {
+    private TrendsViewModel() {
         trends.setValue(new ArrayList<Trend>());
         this.listener = new TwitterDataLoaderListener() {
             @Override
@@ -51,6 +53,11 @@ public class TrendsViewModel extends ViewModel {
 
             }
         };
+    }
+
+    @NonNull
+    public static TrendsViewModel getInstance(){
+        return INSTANCE;
     }
 
     @NonNull
